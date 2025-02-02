@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import {FormEvent, useEffect, useState} from 'react';
+import toast, {Toaster} from 'react-hot-toast';
 import Toggle from '../components/toggle';
 
 
 // Función auxiliar para extraer el dominio de una URL.
 function getDomain(url: string): string {
     try {
-        const hostname = new URL(url.trim()).hostname;
-        return hostname;
+        return new URL(url.trim()).hostname;
     } catch (error) {
         return url;
     }
@@ -288,7 +287,7 @@ export default function AdminPage() {
                                     <div onClick={(e) => e.stopPropagation()}>
                                         <Toggle
                                             checked={url.active}
-                                            onChange={(newValue: boolean) => toggleActive(url.id, url.active)}
+                                            onChange={() => toggleActive(url.id, url.active)}
                                         />
                                     </div>
                                 </td>
@@ -335,9 +334,31 @@ export default function AdminPage() {
                                             >
                                                 Borrar
                                             </button>
+                                            {/* Botón de copiar enlace */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const shareableLink = `${window.location.origin}/${url.slug}`;
+                                                    navigator.clipboard.writeText(shareableLink)
+                                                        .then(() => {
+                                                            toast.success("Enlace copiado: " + shareableLink, {
+                                                                style: { background: '#16a34a', color: '#fff' },
+                                                            });
+                                                        })
+                                                        .catch(() => {
+                                                            toast.error("Error al copiar el enlace", {
+                                                                style: { background: '#dc2626', color: '#fff' },
+                                                            });
+                                                        });
+                                                }}
+                                                className="py-1 px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs ml-2"
+                                            >
+                                                Copiar enlace
+                                            </button>
                                         </>
                                     )}
                                 </td>
+
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">
                                     {new Date(url.created_at).toLocaleString()}
                                 </td>
