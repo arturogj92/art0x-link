@@ -2,8 +2,7 @@
 
 import {FormEvent, useEffect, useState} from 'react';
 import toast, {Toaster} from 'react-hot-toast';
-import Toggle from '../components/toggle';
-
+import Toggle from '../components/toggle'; // Asegúrate de que la ruta sea correcta
 
 // Función auxiliar para extraer el dominio de una URL.
 function getDomain(url: string): string {
@@ -14,6 +13,7 @@ function getDomain(url: string): string {
     }
 }
 
+// Definición del tipo para cada registro de URL.
 interface UrlRecord {
     id: number;
     slug: string;
@@ -24,6 +24,12 @@ interface UrlRecord {
 }
 
 export default function AdminPage() {
+    // Estado de autenticación
+    const [loggedIn, setLoggedIn] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    // Estados para el panel de administración
     const [longUrl, setLongUrl] = useState('');
     const [slug, setSlug] = useState('');
     const [urls, setUrls] = useState<UrlRecord[]>([]);
@@ -33,27 +39,49 @@ export default function AdminPage() {
     const [editing, setEditing] = useState<{ [key: number]: boolean }>({});
     const [editedUrls, setEditedUrls] = useState<{ [key: number]: string }>({});
 
-    // Obtiene las URLs de la API.
-    const fetchUrls = async () => {
-        try {
-            const res = await fetch('/api/url/list');
-            const data = await res.json();
-            setUrls(data.urls);
-        } catch (error) {
-            console.error('Error fetching URLs:', error);
-            toast.error('Error al obtener las URLs', {
+    // Verificar si ya está logueado (usando localStorage)
+    useEffect(() => {
+        if (localStorage.getItem('adminLoggedIn') === 'true') {
+            setLoggedIn(true);
+        }
+    }, []);
+
+    // Función de login (credenciales hardcodeadas)
+    const handleLogin = (e: FormEvent) => {
+        e.preventDefault();
+        if (email === 'admin@admin.com' && password === 'yiko') {
+            localStorage.setItem('adminLoggedIn', 'true');
+            setLoggedIn(true);
+            toast.success('Login exitoso', {
+                style: { background: '#16a34a', color: '#fff' },
+            });
+        } else {
+            toast.error('Credenciales incorrectas', {
                 style: { background: '#dc2626', color: '#fff' },
             });
         }
     };
 
-    // Crea una nueva URL.
+    // Función para obtener las URLs de la API.
+    const fetchUrls = async () => {
+        try {
+            const res = await fetch('/api/url/list');
+            const data = await res.json();
+            setUrls(data.urls);
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            toast.error(`Error al obtener las URLs: ${err.message}`, {
+                style: { background: '#dc2626', color: '#fff' },
+            });
+        }
+    };
+
+    // Función para crear una nueva URL.
     const createUrl = async (e: FormEvent) => {
         e.preventDefault();
-        // Elimina "http://" o "https://" y antepone "https://"
+        // Remover "http://" o "https://" y anteponer "https://"
         const fixedUrl = longUrl.replace(/^https?:\/\//, '');
         const urlWithProtocol = `https://${fixedUrl}`;
-
         try {
             const res = await fetch('/api/url/create', {
                 method: 'POST',
@@ -73,14 +101,15 @@ export default function AdminPage() {
                     style: { background: '#dc2626', color: '#fff' },
                 });
             }
-        } catch (error: any) {
-            toast.error(`Error: ${error.message}`, {
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            toast.error(`Error: ${err.message}`, {
                 style: { background: '#dc2626', color: '#fff' },
             });
         }
     };
 
-    // Cambia el estado activo/inactivo de una URL.
+    // Función para cambiar el estado activo/inactivo de una URL.
     const toggleActive = async (id: number, currentActive: boolean) => {
         try {
             const res = await fetch('/api/url/update', {
@@ -90,23 +119,22 @@ export default function AdminPage() {
             });
             const result = await res.json();
             if (res.ok) {
-                // No se muestra notificación en éxito.
+                // No mostramos notificación en éxito
                 fetchUrls();
             } else {
                 toast.error(`Error: ${result.message}`, {
-                    style: { background: '#dc2626', color: '#fff' }
+                    style: { background: '#dc2626', color: '#fff' },
                 });
             }
-        } catch (error: any) {
-            toast.error(`Error: ${error.message}`, {
-                style: { background: '#dc2626', color: '#fff' }
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            toast.error(`Error: ${err.message}`, {
+                style: { background: '#dc2626', color: '#fff' },
             });
         }
     };
 
-
-
-    // Actualiza la URL (edición inline).
+    // Función para actualizar la URL (edición inline).
     const updateUrl = async (id: number) => {
         try {
             const newUrl = editedUrls[id];
@@ -129,14 +157,15 @@ export default function AdminPage() {
                     style: { background: '#dc2626', color: '#fff' },
                 });
             }
-        } catch (error: any) {
-            toast.error(`Error: ${error.message}`, {
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            toast.error(`Error: ${err.message}`, {
                 style: { background: '#dc2626', color: '#fff' },
             });
         }
     };
 
-    // Borra una URL.
+    // Función para borrar una URL.
     const deleteUrl = async (id: number) => {
         if (!confirm('¿Estás seguro de eliminar esta URL?')) return;
         try {
@@ -156,8 +185,9 @@ export default function AdminPage() {
                     style: { background: '#dc2626', color: '#fff' },
                 });
             }
-        } catch (error: any) {
-            toast.error(`Error: ${error.message}`, {
+        } catch (error: unknown) {
+            const err = error instanceof Error ? error : new Error('Unknown error');
+            toast.error(`Error: ${err.message}`, {
                 style: { background: '#dc2626', color: '#fff' },
             });
         }
@@ -167,7 +197,7 @@ export default function AdminPage() {
         fetchUrls();
     }, []);
 
-    // Filtrado y paginación.
+    // Filtrado y paginación de URLs.
     const filteredUrls = urls.filter((url) =>
         url.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
         url.long_url.toLowerCase().includes(searchTerm.toLowerCase())
@@ -178,11 +208,48 @@ export default function AdminPage() {
         currentPage * rowsPerPage
     );
 
-    // Redirección: al hacer click en la fila se redirige al acortador (/{slug})
+    // Redirección: al hacer click en la fila, redirige al acortador (/{slug})
     const handleRowClick = (slug: string) => {
         window.location.href = `/${slug}`;
     };
 
+    // Si no se ha iniciado sesión, muestra el formulario de login.
+    if (!loggedIn) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+                <div className="bg-gray-800 p-6 rounded-md shadow-md w-80">
+                    <h2 className="text-xl font-bold mb-4">Login Admin</h2>
+                    <form onSubmit={handleLogin}>
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full p-2 rounded mb-2 text-black"
+                            required
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full p-2 rounded mb-4 text-black"
+                            required
+                        />
+                        <button
+                            type="submit"
+                            className="w-full bg-indigo-600 p-2 rounded hover:bg-indigo-700"
+                        >
+                            Login
+                        </button>
+                    </form>
+                </div>
+                <Toaster />
+            </div>
+        );
+    }
+
+    // Renderiza el panel de administración si está autenticado.
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 py-10">
             <div className="max-w-6xl mx-auto bg-gray-800 shadow-md rounded-lg p-6">
@@ -283,7 +350,6 @@ export default function AdminPage() {
                                 </td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">{url.click_count}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">
-                                    {/* Integración del Toggle personalizado */}
                                     <div onClick={(e) => e.stopPropagation()}>
                                         <Toggle
                                             checked={url.active}
@@ -334,7 +400,6 @@ export default function AdminPage() {
                                             >
                                                 Borrar
                                             </button>
-                                            {/* Botón de copiar enlace */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -358,7 +423,6 @@ export default function AdminPage() {
                                         </>
                                     )}
                                 </td>
-
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">
                                     {new Date(url.created_at).toLocaleString()}
                                 </td>
