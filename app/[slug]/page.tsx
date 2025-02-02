@@ -1,25 +1,24 @@
 // app/[slug]/page.tsx
-import { createClient } from '@supabase/supabase-js';
-import { redirect, notFound } from 'next/navigation';
+import { createClient } from "@supabase/supabase-js";
+import { redirect, notFound } from "next/navigation";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-interface PageProps {
-    params: {
-        slug: string;
+export default async function Page(props: any) {
+    // Forzamos el tipado de props para que tenga params y searchParams
+    const { params } = props as {
+        params: { slug: string };
+        searchParams: { [key: string]: string | string[] };
     };
-}
-
-export default async function Page({ params }: PageProps) {
     const { slug } = params;
 
     // Consulta el registro en la base de datos
     const { data, error } = await supabase
-        .from('urls')
-        .select('*')
-        .eq('slug', slug)
+        .from("urls")
+        .select("*")
+        .eq("slug", slug)
         .maybeSingle();
 
     if (error || !data) {
@@ -39,9 +38,9 @@ export default async function Page({ params }: PageProps) {
 
     // Incrementar el contador de clics (opcional, según tu lógica)
     await supabase
-        .from('urls')
+        .from("urls")
         .update({ click_count: data.click_count + 1 })
-        .eq('id', data.id);
+        .eq("id", data.id);
 
     // Redirige al URL largo
     redirect(data.long_url);
