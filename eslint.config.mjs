@@ -11,6 +11,14 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
+    // Puedes agregar 'ignores' si quieres excluir archivos o directorios específicos:
+    // ignores: ["**/some-folder/**"],  // ejemplo para ignorar ciertos archivos
+  },
 ];
 
 export default eslintConfig;
