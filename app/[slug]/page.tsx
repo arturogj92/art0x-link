@@ -14,19 +14,26 @@ export default async function Page(props: any) {
     };
     const { slug } = params;
 
-    // Consulta el registro en la base de datos
+    // Inicia el cronómetro general para la función
+    console.time("Page-" + slug);
+
+    // Mide el tiempo de consulta a la base de datos
+    console.time("dbQuery-" + slug);
     const { data, error } = await supabase
         .from("urls")
         .select("*")
         .eq("slug", slug)
         .maybeSingle();
+    console.timeEnd("dbQuery-" + slug);
 
     if (error || !data) {
+        console.timeEnd("Page-" + slug);
         notFound();
     }
 
-    // Si el enlace no está activo, muestra un mensaje en lugar de redirigir
+    // Si el enlace no está activo, se muestra un mensaje y finaliza la medición
     if (!data.active) {
+        console.timeEnd("Page-" + slug);
         return (
             <div className="flex items-center justify-center h-screen bg-gray-100">
                 <p className="text-2xl font-bold text-red-600">
@@ -36,11 +43,16 @@ export default async function Page(props: any) {
         );
     }
 
-    // Incrementar el contador de clics (opcional, según tu lógica)
+    // Mide el tiempo de actualización del contador de clics
+    console.time("updateClicks-" + slug);
     await supabase
         .from("urls")
         .update({ click_count: data.click_count + 1 })
         .eq("id", data.id);
+    console.timeEnd("updateClicks-" + slug);
+
+    // Finaliza el cronómetro general
+    console.timeEnd("Page-" + slug);
 
     // Redirige al URL largo
     redirect(data.long_url);
