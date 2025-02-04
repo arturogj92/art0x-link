@@ -46,21 +46,35 @@ export default function AdminPage() {
         }
     }, []);
 
-    // Función de login (credenciales hardcodeadas)
-    const handleLogin = (e: FormEvent) => {
+    // Función de login que consulta el endpoint de login
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
-        if (email === 'admin@admin.com' && password === 'yiko') {
-            localStorage.setItem('adminLoggedIn', 'true');
-            setLoggedIn(true);
-            toast.success('Login exitoso', {
-                style: { background: '#16a34a', color: '#fff' },
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
             });
-        } else {
-            toast.error('Credenciales incorrectas', {
+            const result = await res.json();
+            if (res.ok) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                setLoggedIn(true);
+                toast.success('Login exitoso', {
+                    style: { background: '#16a34a', color: '#fff' },
+                });
+            } else {
+                toast.error(result.message, {
+                    style: { background: '#dc2626', color: '#fff' },
+                });
+            }
+        } catch (err: unknown) {
+            const errorObj = err instanceof Error ? err : new Error('Unknown error');
+            toast.error(errorObj.message, {
                 style: { background: '#dc2626', color: '#fff' },
             });
         }
     };
+
 
     // Función para obtener las URLs de la API.
     const fetchUrls = async () => {
