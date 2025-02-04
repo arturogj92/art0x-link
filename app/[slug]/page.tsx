@@ -1,41 +1,33 @@
 // app/[slug]/page.tsx
 import { createClient } from "@supabase/supabase-js";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
+import ClientRedirect from "../components/redirect"; // Ajusta la ruta según corresponda
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
 export default async function Page(props: any) {
-    // Forzamos el tipado de props para que tenga params y searchParams
     const { params } = props as {
         params: { slug: string };
         searchParams: { [key: string]: string | string[] };
     };
-    const { slug } = await params;
+    const { slug } = await Promise.resolve(params);
 
     console.log("Inicio de Page para slug:", slug);
-
-    // Inicia el cronómetro general para la función
     console.time("Page-" + slug);
 
-    // Mide el tiempo de consulta a la base de datos
-    console.time("dbQuery-" + slug);
     const { data, error } = await supabase
         .from("urls")
         .select("id, active, click_count, long_url")
         .eq("slug", slug)
         .maybeSingle();
-    console.timeEnd("dbQuery-" + slug);
 
     if (error || !data) {
         console.timeEnd("Page-" + slug);
         notFound();
     }
 
-    // Si el enlace no está activo, se muestra un mensaje y finaliza la medición
     if (!data.active) {
         console.timeEnd("Page-" + slug);
         return (
@@ -47,21 +39,20 @@ export default async function Page(props: any) {
         );
     }
 
-    // Mide el tiempo de actualización del contador de clics
-    console.time("updateClicks-" + slug);
-    void fetch(`${baseUrl}/api/url/increment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: data.id, currentCount: data.click_count }),
-    }).catch((err) => console.error("Error updating counter via API:", err));
+    // Actualiza contador de clicks
+    try {
+        await supabase
+            .from("urls")
+            .update({ click_count: data.click_count + 1 })
+            .eq("id", data.id);
+        console.log("Contador actualizado para", slug);
+    } catch (err: unknown) {
+        const errorObj = err instanceof Error ? err : new Error("Unknown error");
+        console.error("Error al actualizar contador:", errorObj);
+    }
 
-    console.timeEnd("updateClicks-" + slug);
-
-    // Finaliza el cronómetro general
     console.timeEnd("Page-" + slug);
-
-    // Redirige al URL largo
     console.log("Redirigiendo para slug:", slug);
 
-    redirect(data.long_url);
+    return <ClientRedirect targetUrl={data.long_url} />;
 }

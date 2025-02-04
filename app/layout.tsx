@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./lib/initCache";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
@@ -17,6 +18,8 @@ export const metadata: Metadata = {
   title: "Art0xDev Link Shortener",
   description: "Acortador de url's para facilitar el uso de enlaces",
 };
+
+
 
 export default function RootLayout({
   children,

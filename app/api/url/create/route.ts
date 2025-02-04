@@ -1,8 +1,8 @@
 // app/api/url/create/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { updateUrlInCache } from '@/app/lib/cache';
 
-// Configura el cliente de Supabase usando las variables de entorno
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -12,7 +12,6 @@ export async function POST(request: Request) {
         const { long_url, slug } = await request.json();
         console.log('[CREATE] Datos recibidos:', { long_url, slug });
 
-        // Verificar que se hayan enviado los parámetros necesarios
         if (!long_url || !slug) {
             console.error('[CREATE] Faltan parámetros (long_url o slug)');
             return NextResponse.json(
@@ -21,7 +20,6 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verificar que el slug no exista ya en la tabla
         const { data: existing, error: existingError } = await supabase
             .from('urls')
             .select('*')
@@ -30,7 +28,6 @@ export async function POST(request: Request) {
 
         if (existingError) {
             console.error('[CREATE] Error al verificar existencia del slug:', existingError);
-            // Puedes optar por retornar un error o continuar dependiendo de tu lógica.
         }
 
         if (existing) {
@@ -41,7 +38,6 @@ export async function POST(request: Request) {
             );
         }
 
-        // Inserta el nuevo registro en la tabla "urls"
         const { data, error } = await supabase
             .from('urls')
             .insert([{ long_url, slug }])
@@ -57,6 +53,9 @@ export async function POST(request: Request) {
         }
 
         console.log('[CREATE] URL creada exitosamente:', data);
+        // Actualiza la caché con el nuevo registro.
+        updateUrlInCache(data);
+
         return NextResponse.json({ message: 'URL creada exitosamente', data });
     } catch (error: any) {
         console.error('[CREATE] Error en el servidor:', error);
