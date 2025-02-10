@@ -1,11 +1,10 @@
 'use client';
 
-import {FormEvent, useEffect, useState} from 'react';
-import toast, {Toaster} from 'react-hot-toast';
+import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import Toggle from '../components/toggle';
-import VisitStatsModal from "@/app/components/VisitStatsModal"; // Asegúrate de que la ruta sea correcta
+import VisitStatsModal from '@/app/components/VisitStatsModal';
 
-// Función auxiliar para extraer el dominio de una URL.
 function getDomain(url: string): string {
     try {
         return new URL(url.trim()).hostname;
@@ -13,6 +12,7 @@ function getDomain(url: string): string {
         return url;
     }
 }
+
 
 // Definición del tipo para cada registro de URL.
 interface UrlRecord {
@@ -25,12 +25,8 @@ interface UrlRecord {
 }
 
 export default function AdminPage() {
-    // Estado de autenticación
-    const [loggedIn, setLoggedIn] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-
-    // Estados para el panel de administración
+    // No se usa localStorage ni estado de "loggedIn" porque la seguridad se maneja con JWT y middleware.
+    // Estados para el panel de administración:
     const [longUrl, setLongUrl] = useState('');
     const [slug, setSlug] = useState('');
     const [urls, setUrls] = useState<UrlRecord[]>([]);
@@ -41,44 +37,6 @@ export default function AdminPage() {
     const [editedUrls, setEditedUrls] = useState<{ [key: number]: string }>({});
     const [showModal, setShowModal] = useState(false);
     const [selectedUrlId, setSelectedUrlId] = useState<number | null>(null);
-
-
-    // Verificar si ya está logueado (usando localStorage)
-    useEffect(() => {
-        if (localStorage.getItem('adminLoggedIn') === 'true') {
-            setLoggedIn(true);
-        }
-    }, []);
-
-    // Función de login que consulta el endpoint de login
-    const handleLogin = async (e: FormEvent) => {
-        e.preventDefault();
-        try {
-            const res = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-            const result = await res.json();
-            if (res.ok) {
-                localStorage.setItem('adminLoggedIn', 'true');
-                setLoggedIn(true);
-                toast.success('Login exitoso', {
-                    style: { background: '#16a34a', color: '#fff' },
-                });
-            } else {
-                toast.error(result.message, {
-                    style: { background: '#dc2626', color: '#fff' },
-                });
-            }
-        } catch (err: unknown) {
-            const errorObj = err instanceof Error ? err : new Error('Unknown error');
-            toast.error(errorObj.message, {
-                style: { background: '#dc2626', color: '#fff' },
-            });
-        }
-    };
-
 
     // Función para obtener las URLs de la API.
     const fetchUrls = async () => {
@@ -94,8 +52,12 @@ export default function AdminPage() {
         }
     };
 
+    useEffect(() => {
+        fetchUrls();
+    }, []);
+
     // Función para crear una nueva URL.
-    const createUrl = async (e: FormEvent) => {
+    const createUrl = async (e: React.FormEvent) => {
         e.preventDefault();
         // Remover "http://" o "https://" y anteponer "https://"
         const fixedUrl = longUrl.replace(/^https?:\/\//, '');
@@ -137,7 +99,6 @@ export default function AdminPage() {
             });
             const result = await res.json();
             if (res.ok) {
-                // No mostramos notificación en éxito
                 fetchUrls();
             } else {
                 toast.error(`Error: ${result.message}`, {
@@ -211,10 +172,6 @@ export default function AdminPage() {
         }
     };
 
-    useEffect(() => {
-        fetchUrls();
-    }, []);
-
     // Filtrado y paginación de URLs.
     const filteredUrls = urls.filter((url) =>
         url.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -231,43 +188,6 @@ export default function AdminPage() {
         window.location.href = `/${slug}`;
     };
 
-    // Si no se ha iniciado sesión, muestra el formulario de login.
-    if (!loggedIn) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <div className="bg-gray-800 p-6 rounded-md shadow-md w-80">
-                    <h2 className="text-xl font-bold mb-4">Login Admin</h2>
-                    <form onSubmit={handleLogin}>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-2 rounded mb-2 text-black"
-                            required
-                        />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-2 rounded mb-4 text-black"
-                            required
-                        />
-                        <button
-                            type="submit"
-                            className="w-full bg-indigo-600 p-2 rounded hover:bg-indigo-700"
-                        >
-                            Login
-                        </button>
-                    </form>
-                </div>
-                <Toaster />
-            </div>
-        );
-    }
-
-    // Renderiza el panel de administración si está autenticado.
     return (
         <div className="min-h-screen bg-gray-900 text-gray-100 py-10">
             <div className="max-w-6xl mx-auto bg-gray-800 shadow-md rounded-lg p-6">
@@ -358,8 +278,7 @@ export default function AdminPage() {
                                         />
                                     ) : (
                                         <span className="relative inline-block group">
-                        {getDomain(url.long_url.trim())}
-                                            {/* Tooltip personalizado */}
+                        {url.long_url.trim()}
                                             <span className="absolute left-0 bottom-full mb-2 hidden whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white opacity-0 group-hover:block group-hover:opacity-100 z-10">
                           {url.long_url.trim()}
                         </span>
@@ -438,7 +357,6 @@ export default function AdminPage() {
                                             >
                                                 Copiar enlace
                                             </button>
-                                            {/* Botones Editar, Borrar, Copiar, etc. */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
