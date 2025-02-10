@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Art0xDev Link Shortener",
+  title:  process.env.NODE_ENV === "development" ? "[L] Art0xDev Link Shortener" : "Art0xDev Link Shortener",
   description: "Acortador de url's para facilitar el uso de enlaces",
+  icons: {
+    icon: process.env.NODE_ENV === "development" ? "/favicon-local.ico" : "/favicon.ico",
+  },
 };
 
 
