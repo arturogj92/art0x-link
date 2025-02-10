@@ -2,7 +2,8 @@
 
 import {FormEvent, useEffect, useState} from 'react';
 import toast, {Toaster} from 'react-hot-toast';
-import Toggle from '../components/toggle'; // Asegúrate de que la ruta sea correcta
+import Toggle from '../components/toggle';
+import VisitStatsModal from "@/app/components/VisitStatsModal"; // Asegúrate de que la ruta sea correcta
 
 // Función auxiliar para extraer el dominio de una URL.
 function getDomain(url: string): string {
@@ -38,6 +39,9 @@ export default function AdminPage() {
     const rowsPerPage = 5;
     const [editing, setEditing] = useState<{ [key: number]: boolean }>({});
     const [editedUrls, setEditedUrls] = useState<{ [key: number]: string }>({});
+    const [showModal, setShowModal] = useState(false);
+    const [selectedUrlId, setSelectedUrlId] = useState<number | null>(null);
+
 
     // Verificar si ya está logueado (usando localStorage)
     useEffect(() => {
@@ -434,6 +438,17 @@ export default function AdminPage() {
                                             >
                                                 Copiar enlace
                                             </button>
+                                            {/* Botones Editar, Borrar, Copiar, etc. */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedUrlId(url.id);
+                                                    setShowModal(true);
+                                                }}
+                                                className="py-1 px-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-xs ml-2"
+                                            >
+                                                Ver estadísticas
+                                            </button>
                                         </>
                                     )}
                                 </td>
@@ -467,6 +482,12 @@ export default function AdminPage() {
                 </div>
             </div>
             <Toaster />
+            {showModal && selectedUrlId !== null && (
+                <VisitStatsModal
+                    urlId={selectedUrlId}
+                    onClose={() => { setShowModal(false); setSelectedUrlId(null); }}
+                />
+            )}
         </div>
     );
 }

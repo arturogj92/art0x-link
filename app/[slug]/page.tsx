@@ -1,13 +1,16 @@
-// app/[slug]/page.tsx
+// app/[slug]/page.tsx (modificado)
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
-import ClientRedirect from "../components/redirect"; // Ajusta la ruta según corresponda
+import ClientRedirect from "../components/redirect"; // Asegúrate de que la ruta sea correcta
 
 export const runtime = "edge";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Asumamos que definiste NEXT_PUBLIC_SITE_URL en tu .env (por defecto para localhost)
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export default async function Page(props: any) {
     const { params } = props as {
@@ -41,7 +44,7 @@ export default async function Page(props: any) {
         );
     }
 
-    // Actualiza contador de clicks
+    // Actualiza el contador de clicks (podrías mantenerlo si lo deseas)
     try {
         await supabase
             .from("urls")
@@ -52,6 +55,15 @@ export default async function Page(props: any) {
         const errorObj = err instanceof Error ? err : new Error("Unknown error");
         console.error("Error al actualizar contador:", errorObj);
     }
+
+
+    console.log('registrando visita')
+    // Registra la visita en la tabla visit_logs
+    void fetch(`${baseUrl}/api/url/logVisit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url_id: data.id }),
+    }).catch((err) => console.error("Error registrando visita:", err));
 
     console.timeEnd("Page-" + slug);
     console.log("Redirigiendo para slug:", slug);
