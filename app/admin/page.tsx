@@ -341,7 +341,7 @@ export default function AdminPage() {
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     const shareableLink = `${window.location.origin}/${url.slug}`;
-                                                    navigator.clipboard.writeText(shareableLink)
+                                                    navigator.clipboard.writeText(shareableLink.replace('www', ''))
                                                         .then(() => {
                                                             toast.success("Enlace copiado: " + shareableLink, {
                                                                 style: { background: '#16a34a', color: '#fff' },
