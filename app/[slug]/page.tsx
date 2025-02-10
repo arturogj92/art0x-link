@@ -58,11 +58,13 @@ export default async function Page(props: any) {
 
 
     // Registra la visita en la tabla visit_logs
+    console.log(`llamando a : ${baseUrl}/api/url/logVisit`)
     void fetch(`${baseUrl}/api/url/logVisit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url_id: data.id }),
-    }).catch((err) => console.error("Error registrando visita:", err));
+    })
+        .catch((err) => console.error("Error registrando visita:", err));
 
     console.timeEnd("Page-" + slug);
     console.log("Redirigiendo para slug:", slug);
