@@ -57,7 +57,6 @@ export default async function Page(props: any) {
     }
 
 
-    console.log('registrando visita')
     // Registra la visita en la tabla visit_logs
     void fetch(`${baseUrl}/api/url/logVisit`, {
         method: "POST",
