@@ -10,6 +10,8 @@ export default function AdminLoginPage() {
     const [password, setPassword] = useState('');
     const router = useRouter();
 
+    console.log('Inicio de AdminLoginPage');
+
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
         try {
