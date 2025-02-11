@@ -1,3 +1,4 @@
+// app/api/cron/updateVisitCountry/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -7,16 +8,17 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Función para obtener el país a partir de una IP usando ipapi.co
+// Función para obtener el país a partir de una IP usando ipinfo.io (sin reintentos)
 async function fetchCountry(ip: string): Promise<string> {
     try {
-        const res = await fetch(`https://ipapi.co/${ip}/json/`);
+        const res = await fetch(`https://ipinfo.io/${ip}/json`);
         if (!res.ok) {
-            console.error("Error en ipapi:", res.statusText);
+            console.error("Error en ipinfo:", res.statusText);
             return "Desconocido";
         }
         const data = await res.json();
-        return data.country_name || "Desconocido";
+        // ipinfo devuelve el país en formato ISO (por ejemplo, "US")
+        return data.country || "Desconocido";
     } catch (err) {
         console.error("Error fetching country for IP:", ip, err);
         return "Desconocido";
@@ -39,8 +41,10 @@ export async function GET() {
     if (logs && logs.length > 0) {
         for (const log of logs) {
             if (log.ip) {
+                console.log(`Procesando log ID ${log.id} con IP: ${log.ip}`);
                 const country = await fetchCountry(log.ip);
-                // Actualiza el registro si el país obtenido es distinto a "Desconocido" o si la columna aún está vacía
+                console.log(`País obtenido para log ID ${log.id}: ${country}`);
+                // Actualiza el registro
                 const { error: updateError } = await supabase
                     .from("visit_logs")
                     .update({ country })
@@ -49,7 +53,10 @@ export async function GET() {
                     console.error(`Error actualizando el log ${log.id}:`, updateError.message);
                 } else {
                     updatedCount++;
+                    console.log(`Log ${log.id} actualizado correctamente.`);
                 }
+                // Espera 5 segundos antes de procesar el siguiente registro
+                await new Promise((resolve) => setTimeout(resolve, 5000));
             }
         }
     }
