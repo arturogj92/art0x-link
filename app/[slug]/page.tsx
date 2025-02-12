@@ -16,7 +16,7 @@ export default async function Page(props: any) {
     };
     const { slug } = await Promise.resolve(params);
 
-    console.log("Inicio de Page para slug:", slug);
+    console.log("Inicio de Page para el slug:", slug);
 
     const { data, error } = await supabase
         .from("urls")
