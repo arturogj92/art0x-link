@@ -10,14 +10,19 @@ interface ClientRedirectProps {
 
 export default function ClientRedirect({ targetUrl, urlId }: ClientRedirectProps): JSX.Element {
     useEffect(() => {
-        // Llama al endpoint de registro de visita desde el cliente
-        fetch(`/api/url/logVisit`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url_id: urlId }),
-        }).catch((err) => console.error("Error registrando visita:", err));
-
-        // Luego redirige al targetUrl
+        const payload = JSON.stringify({ url_id: urlId });
+        // Usa sendBeacon para registrar la visita sin bloquear la redirección
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(`/api/url/logVisit`, payload);
+        } else {
+            // Fallback a fetch en caso de que sendBeacon no esté disponible
+            fetch(`/api/url/logVisit`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: payload,
+            }).catch((err) => console.error("Error registrando visita:", err));
+        }
+        // Redirige inmediatamente
         window.location.href = targetUrl;
     }, [targetUrl, urlId]);
 

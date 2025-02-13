@@ -278,7 +278,7 @@ export default function AdminPage() {
                                         />
                                     ) : (
                                         <span className="relative inline-block group">
-                        {url.long_url.trim()}
+                        {url.long_url.trim().substring(0,30)}
                                             <span className="absolute left-0 bottom-full mb-2 hidden whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white opacity-0 group-hover:block group-hover:opacity-100 z-10">
                           {url.long_url.trim()}
                         </span>
