@@ -57,7 +57,7 @@ export async function GET() {
                     console.log(`Log ${log.id} actualizado correctamente.`);
                 }
                 // Espera 5 segundos antes de procesar el siguiente registro
-                await new Promise((resolve) => setTimeout(resolve, 2000));
+                await new Promise((resolve) => setTimeout(resolve, 10));
             }
         }
     }
