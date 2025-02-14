@@ -2,6 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import ClientRedirect from "../components/redirect";
+import { headers } from "next/headers";
 
 export const runtime = "edge";
 
@@ -38,7 +39,7 @@ export default async function Page(props: any) {
         );
     }
 
-    // Actualiza el contador de clicks (puedes dejarlo si lo deseas o eliminarlo, ya que se registrará en el endpoint de logVisit)
+    // Actualiza el contador de clicks
     try {
         await supabase
             .from("urls")
@@ -50,8 +51,35 @@ export default async function Page(props: any) {
         console.error("Error al actualizar contador:", errorObj);
     }
 
-    console.log("Redirigiendo para slug:", slug);
+    // Registrar la visita en visit_logs de forma server-side
+    try {
+        // Extraer los headers del request
+        const reqHeaders = await headers() as Headers;
+        // Intenta obtener la IP real
+        const ipFromXForwarded = reqHeaders.get("x-forwarded-for");
+        const ipFromXReal = reqHeaders.get("x-real-ip");
+        const ip =
+            ipFromXForwarded?.split(",")[0]?.trim() ||
+            ipFromXReal ||
+            "unknown";
 
-    // Aquí solo renderizamos el componente de redirección, que desde el cliente registrará la visita y redirigirá.
+        // Inserta el registro en la tabla visit_logs
+        // Se asume que la tabla tiene columnas: url_id, ip, country y visited_at con valor por defecto (NOW())
+        const { error: logError } = await supabase
+            .from("visit_logs")
+            .insert([{ url_id: data.id, ip, country: "Desconocido" }]);
+
+        if (logError) {
+            console.error("Error registrando visita:", logError.message);
+        } else {
+            console.log("Visita registrada para url_id:", data.id, "IP:", ip);
+        }
+    } catch (err: unknown) {
+        const errorObj = err instanceof Error ? err : new Error("Unknown error");
+        console.error("Error en el registro de visita:", errorObj.message);
+    }
+
+    console.log("Redirigiendo para slug:", slug);
+    // Renderiza el componente de redirección que redirige al URL largo
     return <ClientRedirect targetUrl={data.long_url} urlId={data.id} />;
 }
