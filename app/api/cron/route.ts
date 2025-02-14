@@ -2,7 +2,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -56,7 +57,7 @@ export async function GET() {
                     console.log(`Log ${log.id} actualizado correctamente.`);
                 }
                 // Espera 5 segundos antes de procesar el siguiente registro
-                await new Promise((resolve) => setTimeout(resolve, 5000));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
         }
     }
