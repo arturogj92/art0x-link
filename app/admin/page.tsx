@@ -12,7 +12,7 @@ export default function AdminPage() {
     const [urls, setUrls] = useState<UrlRecord[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const rowsPerPage = 5;
+    const rowsPerPage = 10;
     const [showModal, setShowModal] = useState(false);
     const [selectedUrlId, setSelectedUrlId] = useState<number | null>(null);
 
