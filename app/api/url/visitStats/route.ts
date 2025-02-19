@@ -33,7 +33,9 @@ export async function GET(request: Request) {
             .from('visit_logs')
             .select('*')
             .eq('url_id', parseInt(url_id))
-            .gte('visited_at', startDate.toISOString());
+            .gte('visited_at', startDate.toISOString())
+            .limit(999999);
+
 
         if (visitsError) {
             console.error("Error obteniendo visitas:", visitsError.message);
