@@ -34,7 +34,6 @@ export async function GET(request: Request) {
             .select('*')
             .eq('url_id', parseInt(url_id))
             .gte('visited_at', startDate.toISOString())
-            .limit(999999);
 
 
         if (visitsError) {
@@ -95,7 +94,6 @@ export async function GET(request: Request) {
             .eq('url_id', parseInt(url_id))
             .gte('visited_at', previousStartDate.toISOString())
             .lt('visited_at', startDate.toISOString())
-            .limit(9999999);
 
         let previousTotal = 0;
         if (!prevError && prevVisitsData) {
