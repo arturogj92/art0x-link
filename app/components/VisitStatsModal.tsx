@@ -69,7 +69,7 @@ export default function VisitStatsModal({ urlId, onClose }: VisitStatsModalProps
                 label: "Clics diarios",
                 data: dailyStats.map((d) => d.count),
                 fill: false,
-                borderColor: "rgba(75, 192, 192, 1)",
+                borderColor: "rgba(75, 192, 192, 2)",
                 backgroundColor: "rgba(75, 192, 192, 0.2)",
                 tension: 0.1,
             },
