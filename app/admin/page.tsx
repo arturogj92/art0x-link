@@ -1,4 +1,3 @@
-// app/admin/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,6 +7,9 @@ import PaginationControls from "@/app/components/pagination-control";
 import VisitStatsModal from "@/app/components/VisitStatsModal";
 import CreateUrlForm from "@/app/components/create-url-form";
 
+type SortField = "click_count" | "created_at" | null;
+type SortDirection = "asc" | "desc";
+
 export default function AdminPage() {
     const [urls, setUrls] = useState<UrlRecord[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -15,6 +17,9 @@ export default function AdminPage() {
     const rowsPerPage = 10;
     const [showModal, setShowModal] = useState(false);
     const [selectedUrlId, setSelectedUrlId] = useState<number | null>(null);
+
+    const [sortBy, setSortBy] = useState<SortField>(null);
+    const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
     const fetchUrls = async () => {
         try {
@@ -33,12 +38,36 @@ export default function AdminPage() {
         fetchUrls();
     }, []);
 
+    const handleSort = (field: SortField) => {
+        if (sortBy === field) {
+            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+        } else {
+            setSortBy(field);
+            setSortDirection("asc");
+        }
+        setCurrentPage(1);
+    };
+
     const filteredUrls = urls.filter((url) =>
         url.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
         url.long_url.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const totalPages = Math.ceil(filteredUrls.length / rowsPerPage);
-    const paginatedUrls = filteredUrls.slice(
+
+    const sortedUrls = [...filteredUrls];
+    if (sortBy === "click_count") {
+        sortedUrls.sort((a, b) => a.click_count - b.click_count);
+    } else if (sortBy === "created_at") {
+        sortedUrls.sort(
+            (a, b) =>
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+    }
+    if (sortDirection === "desc") {
+        sortedUrls.reverse();
+    }
+
+    const totalPages = Math.ceil(sortedUrls.length / rowsPerPage);
+    const paginatedUrls = sortedUrls.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
@@ -130,7 +159,11 @@ export default function AdminPage() {
         <div className="min-h-screen bg-gray-900 text-gray-100 py-10">
             <div className="max-w-6xl mx-auto bg-gray-800 shadow-md rounded-lg p-6">
                 <h1 className="text-3xl font-bold mb-6 text-center">Panel de Administración</h1>
+
+                {/* Formulario para crear URL */}
                 <CreateUrlForm onUrlCreated={fetchUrls} />
+
+                {/* Input de búsqueda */}
                 <div className="mt-8 flex justify-between items-center">
                     <input
                         type="text"
@@ -143,6 +176,7 @@ export default function AdminPage() {
                         className="block w-1/3 rounded-md border border-gray-700 bg-gray-700 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
                     />
                 </div>
+
                 <div className="mt-4">
                     <UrlTable
                         urls={paginatedUrls}
@@ -150,15 +184,21 @@ export default function AdminPage() {
                         onUpdateUrl={updateUrl}
                         onDeleteUrl={deleteUrl}
                         onStats={handleStats}
+                        sortBy={sortBy}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
                     />
                 </div>
+
                 <PaginationControls
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={setCurrentPage}
                 />
             </div>
+
             <Toaster />
+
             {showModal && selectedUrlId !== null && (
                 <VisitStatsModal
                     urlId={selectedUrlId}

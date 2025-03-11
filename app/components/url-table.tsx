@@ -1,4 +1,3 @@
-// app/components/UrlTable.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -20,6 +19,11 @@ interface UrlTableProps {
     onUpdateUrl: (id: number, newUrl: string) => Promise<void>;
     onDeleteUrl: (id: number) => Promise<void>;
     onStats: (id: number) => void;
+
+    // Para manejar el sort en las columnas "click_count" y "created_at"
+    sortBy?: "click_count" | "created_at" | null;
+    sortDirection?: "asc" | "desc";
+    onSort?: (field: "click_count" | "created_at") => void;
 }
 
 export default function UrlTable({
@@ -28,6 +32,9 @@ export default function UrlTable({
                                      onUpdateUrl,
                                      onDeleteUrl,
                                      onStats,
+                                     sortBy,
+                                     sortDirection,
+                                     onSort,
                                  }: UrlTableProps) {
     const [editing, setEditing] = useState<{ [key: number]: boolean }>({});
     const [editedUrls, setEditedUrls] = useState<{ [key: number]: string }>({});
@@ -37,18 +44,65 @@ export default function UrlTable({
         setEditing((prev) => ({ ...prev, [id]: false }));
     };
 
+    // Muestra un indicador en la cabecera si la columna está ordenada
+    const renderSortIndicator = (field: "click_count" | "created_at") => {
+        if (sortBy === field) {
+            return sortDirection === "asc" ? "↑" : "↓";
+        }
+        return null;
+    };
+
     return (
         <div className="overflow-x-auto mt-4">
             <table className="min-w-full divide-y divide-gray-700">
                 <thead className="bg-gray-700">
                 <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Slug</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">URL Larga</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Clicks</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Activo</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Acciones</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Creado</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                        ID
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                        Slug
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                        URL Larga
+                    </th>
+
+                    {/* Cabecera "Clicks" con click para ordenar */}
+                    <th
+                        className="
+    px-4 py-2
+    text-left text-xs font-medium uppercase tracking-wider
+    cursor-pointer select-none
+    // La clave: inline-flex items-center para forzar la alineación en la misma línea
+    inline-flex items-center gap-1
+    whitespace-nowrap
+  "
+                        onClick={() => onSort && onSort("click_count")}
+                    >
+                        <span>Clicks</span>
+                        <span className="inline-block ml-1">
+                {renderSortIndicator("click_count")}
+              </span>
+                    </th>
+
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                        Activo
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                        Acciones
+                    </th>
+
+                    {/* Cabecera "Creado" con click para ordenar */}
+                    <th
+                        className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none"
+                        onClick={() => onSort && onSort("created_at")}
+                    >
+                        <span>Creado</span>
+                        {/* Indicador a la derecha con ml-1 */}
+                        <span className="inline-block ml-1">
+                {renderSortIndicator("created_at")}
+              </span>
+                    </th>
                 </tr>
                 </thead>
                 <tbody className="bg-gray-800 divide-y divide-gray-700">
@@ -62,7 +116,10 @@ export default function UrlTable({
                                     type="text"
                                     value={editedUrls[url.id] ?? url.long_url.trim()}
                                     onChange={(e) =>
-                                        setEditedUrls((prev) => ({ ...prev, [url.id]: e.target.value }))
+                                        setEditedUrls((prev) => ({
+                                            ...prev,
+                                            [url.id]: e.target.value,
+                                        }))
                                     }
                                     className="w-full rounded-md border border-gray-600 bg-gray-700 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
                                 />
@@ -75,13 +132,18 @@ export default function UrlTable({
                   </span>
                             )}
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm">{url.click_count}</td>
+
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                            {url.click_count}
+                        </td>
+
                         <td className="px-4 py-2 whitespace-nowrap text-sm">
                             <Toggle
                                 checked={url.active}
                                 onChange={() => onToggleActive(url.id, url.active)}
                             />
                         </td>
+
                         <td className="px-4 py-2 whitespace-nowrap text-sm">
                             {editing[url.id] ? (
                                 <>
@@ -92,7 +154,9 @@ export default function UrlTable({
                                         Guardar
                                     </button>
                                     <button
-                                        onClick={() => setEditing((prev) => ({ ...prev, [url.id]: false }))}
+                                        onClick={() =>
+                                            setEditing((prev) => ({ ...prev, [url.id]: false }))
+                                        }
                                         className="py-1 px-3 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-xs"
                                     >
                                         Cancelar
@@ -103,7 +167,10 @@ export default function UrlTable({
                                     <button
                                         onClick={() => {
                                             setEditing((prev) => ({ ...prev, [url.id]: true }));
-                                            setEditedUrls((prev) => ({ ...prev, [url.id]: url.long_url }));
+                                            setEditedUrls((prev) => ({
+                                                ...prev,
+                                                [url.id]: url.long_url,
+                                            }));
                                         }}
                                         className="mr-2 py-1 px-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-xs"
                                     >
@@ -144,6 +211,7 @@ export default function UrlTable({
                                 </>
                             )}
                         </td>
+
                         <td className="px-4 py-2 whitespace-nowrap text-sm">
                             {new Date(url.created_at).toLocaleString()}
                         </td>
